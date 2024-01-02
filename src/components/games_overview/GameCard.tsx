@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Card, Space, Tag } from "antd";
+import { Button, Card, Tag } from "antd";
 import { useNavigate } from "react-router-dom";
 
 const { Meta } = Card;

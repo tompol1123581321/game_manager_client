@@ -1,7 +1,10 @@
 import React, { useMemo } from "react";
 import { Layout, Space, Typography } from "antd";
 import { useLocation } from "react-router-dom";
-import { useAuth } from "../../hooks/authorization/useAuth";
+import {
+  AuthorizationHandlerComponent,
+  authorizationContext,
+} from "../../hooks/authorization/AuthProvider";
 
 const { Content, Footer, Header } = Layout;
 
@@ -21,43 +24,47 @@ const getTitleBasedOnUrl = (url: string) => {
 };
 
 export const AppLayout: React.FC<Props> = ({ children }) => {
-  const location = useLocation();
-
-  const { authorizedUsername } = useAuth();
+  const { pathname } = useLocation();
 
   const subTitleBasedOnUrl = useMemo(
-    () => getTitleBasedOnUrl(location.pathname),
-    [location.pathname]
+    () => getTitleBasedOnUrl(pathname),
+    [pathname]
   );
 
   return (
-    <Layout>
-      <Header
-        style={{
-          backgroundColor: "ActiveBorder",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Space direction="horizontal">
-          <Typography.Text>
-            Game-manager-app <b> {subTitleBasedOnUrl}</b>
-          </Typography.Text>
-          {authorizedUsername && (
-            <Typography.Text>
-              ( Logged in as: <b>{authorizedUsername}</b> )
-            </Typography.Text>
-          )}
-        </Space>
-      </Header>
-      <Content
-        style={{
-          padding: "30px 48px",
-        }}
-      >
-        {children}
-      </Content>
-    </Layout>
+    <AuthorizationHandlerComponent currentPath={pathname ?? ""}>
+      <Layout>
+        <Header
+          style={{
+            backgroundColor: "ActiveBorder",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <authorizationContext.Consumer>
+            {(context) => (
+              <Space direction="horizontal">
+                <Typography.Text>
+                  Game-manager-app <b> {subTitleBasedOnUrl}</b>
+                </Typography.Text>
+                {context.data.user?.username && (
+                  <Typography.Text>
+                    ( Logged in as: <b>{context.data.user?.username}</b> )
+                  </Typography.Text>
+                )}
+              </Space>
+            )}
+          </authorizationContext.Consumer>
+        </Header>
+        <Content
+          style={{
+            padding: "30px 48px",
+          }}
+        >
+          {children}
+        </Content>
+      </Layout>
+    </AuthorizationHandlerComponent>
   );
 };

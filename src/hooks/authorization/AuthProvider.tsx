@@ -65,7 +65,7 @@ export const AuthorizationHandlerComponent: React.FC<Props> = ({
       data: userAuthorizationData,
       updateUserAuthorizationData: updateUserAuthData,
     }),
-    [updateUserAuthData]
+    [userAuthorizationData]
   );
 
   return (

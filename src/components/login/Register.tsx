@@ -2,9 +2,9 @@ import { Space, Input, Button } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useState } from "react";
 import { authorizationContext } from "../../hooks/authorization/AuthProvider";
-import { register } from "../../api";
 import { LoginAndRegisterRequest } from "../../models";
 import { useNavigate } from "react-router-dom";
+import { register } from "../../api";
 
 export const Register = () => {
   const { updateUserAuthorizationData = () => {} } =
@@ -19,8 +19,12 @@ export const Register = () => {
   const onRegister = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { isAuthorized, token, user } = await register(userData);
-      updateUserAuthorizationData({ isAuthorized, jwt: token, user });
+      const { isAuthorized, token, authorizedUser } = await register(userData);
+      updateUserAuthorizationData({
+        isAuthorized,
+        jwt: token,
+        user: authorizedUser,
+      });
       setIsLoading(false);
       navigate("/list");
     } catch (e) {

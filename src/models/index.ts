@@ -30,7 +30,7 @@ export interface LoginAndRegisterResponse {
   isAuthorized: boolean;
   token?: string;
   message?: string;
-  user?: User;
+  authorizedUser?: User;
 }
 
 export interface PurchaseGameRequest {

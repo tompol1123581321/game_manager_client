@@ -1,40 +1,39 @@
 import React from "react";
 import { Button, Card, Tag } from "antd";
 import { useNavigate } from "react-router-dom";
+import { Game } from "../../models";
 
 const { Meta } = Card;
 
 type Props = {
-  gameName?: string;
-  gameId?: string;
-  gameImageUrl?: string;
-  gameDescribtion?: string;
-  isInstalled?: boolean;
+  gameInfo: Game;
 };
 
 export const GameCard: React.FC<Props> = ({
-  gameImageUrl = "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png",
-  gameDescribtion = "This is the description",
-  gameId = 0,
-  gameName = "defaultGame",
-  isInstalled,
+  gameInfo: {
+    imageUrl = "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png",
+    description = "This is the description",
+    _id = "0",
+    name = "defaultGame",
+  },
 }) => {
   const navigate = useNavigate();
+  const isInstalled = true;
 
   return (
     <Card
-      style={{ width: 300 }}
-      cover={<img alt={gameName} src={gameImageUrl} />}
+      bordered
+      cover={<img style={{ height: 150 }} alt={name} src={imageUrl} />}
       actions={[
         <Button
           type="primary"
-          onClick={() => navigate(`/activity/${gameId}`)}
+          onClick={() => navigate(`/activity/${_id}`)}
           children={"Go to detail!"}
         />,
       ]}
     >
       <Meta
-        title={gameName}
+        title={name}
         style={{ paddingBottom: "1rem" }}
         description={
           isInstalled ? (
@@ -44,7 +43,7 @@ export const GameCard: React.FC<Props> = ({
           )
         }
       />
-      <Meta description={gameDescribtion} />
+      <Meta description={description} />
     </Card>
   );
 };

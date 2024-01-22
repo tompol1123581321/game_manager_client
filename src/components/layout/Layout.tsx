@@ -11,7 +11,8 @@ const { Content, Footer, Header } = Layout;
 type Props = { children: React.ReactNode };
 
 const getTitleBasedOnUrl = (url: string) => {
-  switch (url) {
+  const cleanedPathName = "/" + url.split("/")[1];
+  switch (cleanedPathName) {
     case "/":
       return "Login-page";
     case "/list":
@@ -51,6 +52,11 @@ export const AppLayout: React.FC<Props> = ({ children }) => {
                 {context.data.user?.username && (
                   <Typography.Text>
                     ( Logged in as: <b>{context.data.user?.username}</b> )
+                  </Typography.Text>
+                )}
+                {context.data.user?.credit !== undefined && (
+                  <Typography.Text>
+                    <b> Credit: {context.data.user?.credit}</b>
                   </Typography.Text>
                 )}
               </Space>

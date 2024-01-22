@@ -11,7 +11,10 @@ function App() {
         <Routes>
           <Route path="/" Component={LoginOrRegister} />
           <Route path="/list" Component={GameOverview} />
-          <Route path="/activity/:gameId" Component={Activity} />
+          <Route
+            path="/activity/:gameId/:gameName/:isPurchased/:price"
+            Component={Activity}
+          />
         </Routes>
       </AppLayout>
     </BrowserRouter>

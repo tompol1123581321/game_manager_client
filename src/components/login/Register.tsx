@@ -2,7 +2,6 @@ import { Space, Input, Button } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useState } from "react";
 import { authorizationContext } from "../../hooks/authorization/AuthProvider";
-import { LoginAndRegisterRequest } from "../../models";
 import { useNavigate } from "react-router-dom";
 import { register } from "../../api";
 
@@ -11,12 +10,16 @@ export const Register = () => {
     useContext(authorizationContext);
   const navigate = useNavigate();
 
-  const [userData, setUserData] = useState<LoginAndRegisterRequest>({
+  const [userData, setUserData] = useState({
     password: "",
+    password_replica: "",
     username: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const onRegister = useCallback(async () => {
+    if (userData.password !== userData.password_replica) {
+      return;
+    }
     setIsLoading(true);
     try {
       const { isAuthorized, token, authorizedUser } = await register(userData);
@@ -49,9 +52,9 @@ export const Register = () => {
 
       <Input
         onChange={(e) => {
-          setUserData({ ...userData, password: e.target.value });
+          setUserData({ ...userData, password_replica: e.target.value });
         }}
-        value={userData.password}
+        value={userData.password_replica}
         disabled={isLoading}
         type="password"
         size="large"

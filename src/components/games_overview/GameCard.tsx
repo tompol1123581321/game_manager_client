@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Button, Card, Tag } from "antd";
 import { useNavigate } from "react-router-dom";
 import { Game } from "../../models";
+import { authorizationContext } from "../../hooks/authorization/AuthProvider";
 
 const { Meta } = Card;
 
@@ -15,10 +16,14 @@ export const GameCard: React.FC<Props> = ({
     description = "This is the description",
     _id = "0",
     name = "defaultGame",
+    price = Infinity,
   },
 }) => {
+  const {
+    data: { user },
+  } = useContext(authorizationContext);
   const navigate = useNavigate();
-  const isInstalled = true;
+  const isPurchased = user?.purchasedGames.includes(_id);
 
   return (
     <Card
@@ -27,7 +32,9 @@ export const GameCard: React.FC<Props> = ({
       actions={[
         <Button
           type="primary"
-          onClick={() => navigate(`/activity/${_id}`)}
+          onClick={() =>
+            navigate(`/activity/${_id}/${name}/${isPurchased}/${price}`)
+          }
           children={"Go to detail!"}
         />,
       ]}
@@ -36,11 +43,14 @@ export const GameCard: React.FC<Props> = ({
         title={name}
         style={{ paddingBottom: "1rem" }}
         description={
-          isInstalled ? (
-            <Tag color="green">Installed</Tag>
-          ) : (
-            <Tag color="yellow-inverse">Not installed</Tag>
-          )
+          <>
+            {isPurchased ? (
+              <Tag color="green">Purchased</Tag>
+            ) : (
+              <Tag color="yellow-inverse">Not purchased</Tag>
+            )}
+            <b>Price :{price}</b>
+          </>
         }
       />
       <Meta description={description} />

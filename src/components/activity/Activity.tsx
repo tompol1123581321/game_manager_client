@@ -2,22 +2,29 @@ import { Row, Col, Statistic, Button, Space, Progress, Layout } from "antd";
 import Descriptions, { DescriptionsProps } from "antd/es/descriptions";
 import { Header, Content, Footer } from "antd/es/layout/layout";
 import { existsSync } from "fs";
+import { invoke } from "@tauri-apps/api/tauri";
 import Title from "antd/es/typography/Title";
 import { AxiosResponse } from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { authorizationContext } from "../../hooks/authorization/AuthProvider";
+import { purchaseGame } from "../../api";
 
 const twoColors = { "0%": "#108ee9", "100%": "#87d068" };
 
 type ActivitySTate = "isInstalled" | "isPurchased" | "notPurchased";
 
 export const Activity = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { data, updateUserAuthorizationData } =
+    useContext(authorizationContext);
   const { gameId, gameName, isPurchased, price } = useParams();
   const [isInstalledOnSystem, setIsInstalledOnSystem] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  const checkIfTheGameIsInstalled = () => {
+  const checkIfTheGameIsInstalled = async () => {
     const path = `/home/tomas/game_manager_games/${gameName}`;
-    setIsInstalledOnSystem(existsSync(path));
+    setIsInstalledOnSystem(await invoke("check_folder_exists", { path }));
   };
 
   useEffect(() => {
@@ -29,10 +36,25 @@ export const Activity = () => {
     [isPurchased, isInstalledOnSystem]
   );
   const [acitivityState, setActivityState] = useState<ActivitySTate>(
-    isInstalled ? "isInstalled" : isPurchased ? "isPurchased" : "notPurchased"
+    isInstalled
+      ? "isInstalled"
+      : isPurchased === "true"
+      ? "isPurchased"
+      : "notPurchased"
   );
 
   const onButtonClick = useCallback(async () => {
+    if (
+      !gameId ||
+      !data.user?._id ||
+      !data.jwt ||
+      !updateUserAuthorizationData ||
+      isLoading
+    ) {
+      return;
+    }
+    console.log(acitivityState, isPurchased);
+    setIsLoading(true);
     switch (acitivityState) {
       case "isInstalled":
         break;
@@ -40,8 +62,14 @@ export const Activity = () => {
         break;
       case "notPurchased":
       default:
+        const updatedUser = await purchaseGame(
+          { gameId, userId: data.user?._id },
+          data.jwt
+        );
+        updateUserAuthorizationData({ user: updatedUser });
         break;
     }
+    setIsLoading(false);
   }, [acitivityState]);
 
   return (
@@ -53,12 +81,17 @@ export const Activity = () => {
 
           <Button
             onClick={onButtonClick}
-            disabled={false}
+            disabled={isLoading}
             shape="default"
             type="primary"
             size="large"
           >
-            ActionB
+            {acitivityState === "isInstalled"
+              ? "Play"
+              : acitivityState === "isPurchased"
+              ? " Install"
+              : "Purchase"}{" "}
+            {gameName}
           </Button>
         </Space>
       </Col>
@@ -70,7 +103,7 @@ export const Activity = () => {
         </Space>
       </Col>
       <Title style={{ marginTop: "6rem" }} level={2}>
-        State: (Installing)
+        State: ({acitivityState})
       </Title>
 
       <Progress
@@ -78,7 +111,7 @@ export const Activity = () => {
         showInfo
         size={"small"}
         strokeColor={twoColors}
-        percent={50}
+        percent={progress}
       />
     </Row>
   );

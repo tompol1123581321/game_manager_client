@@ -7,6 +7,7 @@ import {
   CheckSessionValidityResponse,
   LoginAndRegisterResponse,
   LoginAndRegisterRequest,
+  User,
 } from "../models";
 
 const API_BASE_URL = "http://localhost:8000";
@@ -51,7 +52,7 @@ export const register = async (
 export const purchaseGame = async (
   requestBody: PurchaseGameRequest,
   jwt: string
-): Promise<void> => {
+): Promise<User> => {
   try {
     const response = await axios.post(
       API_BASE_URL + "/api/purchaseGame",
@@ -59,6 +60,7 @@ export const purchaseGame = async (
       { headers: generateHeaders(jwt ?? ""), withCredentials: true }
     );
     console.log(response);
+    return response.data;
   } catch (error) {
     throw new Error((error as Error).message);
   }

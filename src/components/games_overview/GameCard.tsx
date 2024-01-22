@@ -24,6 +24,7 @@ export const GameCard: React.FC<Props> = ({
   } = useContext(authorizationContext);
   const navigate = useNavigate();
   const isPurchased = user?.purchasedGames.includes(_id);
+  console.log(_id, user?.purchasedGames, isPurchased);
 
   return (
     <Card

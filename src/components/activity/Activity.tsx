@@ -1,18 +1,18 @@
-import { Row, Col, Statistic, Button, Space, Progress, Layout } from "antd";
-import Descriptions, { DescriptionsProps } from "antd/es/descriptions";
-import { Header, Content, Footer } from "antd/es/layout/layout";
-import { existsSync } from "fs";
+import { Row, Col, Statistic, Button, Space } from "antd";
 import { invoke } from "@tauri-apps/api/tauri";
 import Title from "antd/es/typography/Title";
-import { AxiosResponse } from "axios";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { authorizationContext } from "../../hooks/authorization/AuthProvider";
-import { purchaseGame } from "../../api";
+import { activateSession, downloadGame, purchaseGame } from "../../api";
 
-const twoColors = { "0%": "#108ee9", "100%": "#87d068" };
-
-type ActivitySTate = "isInstalled" | "isPurchased" | "notPurchased";
+type ActivitySTate =
+  | "isInstalled"
+  | "isInstalling"
+  | "isPlaying"
+  | "isStarting"
+  | "isPurchased"
+  | "notPurchased";
 
 export const Activity = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +20,6 @@ export const Activity = () => {
     useContext(authorizationContext);
   const { gameId, gameName, isPurchased, price } = useParams();
   const [isInstalledOnSystem, setIsInstalledOnSystem] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   const checkIfTheGameIsInstalled = async () => {
     const path = `/home/tomas/game_manager_games/${gameName}`;
@@ -35,6 +34,7 @@ export const Activity = () => {
     () => isPurchased === "true" && isInstalledOnSystem,
     [isPurchased, isInstalledOnSystem]
   );
+
   const [acitivityState, setActivityState] = useState<ActivitySTate>(
     isInstalled
       ? "isInstalled"
@@ -53,12 +53,41 @@ export const Activity = () => {
     ) {
       return;
     }
-    console.log(acitivityState, isPurchased);
     setIsLoading(true);
     switch (acitivityState) {
+      case "isPlaying":
+        console.log("t");
+        break;
       case "isInstalled":
+        setActivityState("isStarting");
+        const { secret } = await activateSession(
+          { gameId, userId: data.user?._id, jwt: data.jwt },
+          data.jwt
+        );
+        try {
+          await invoke("run_script", {
+            zipPath: `../game_manager_games/${gameId}.zip`,
+            targetDir: `../game_manager_games/${gameId}`,
+            args: [
+              "--key1",
+              data.user._id,
+              "--key2",
+              gameId,
+              "--key3",
+              data.jwt,
+            ],
+          });
+        } catch (error) {
+          console.log(error);
+        }
+
+        setActivityState("isPlaying");
         break;
       case "isPurchased":
+        setActivityState("isInstalling");
+        await downloadGame({ gameId, userId: data.user?._id }, data.jwt);
+        await checkIfTheGameIsInstalled();
+        setActivityState("isInstalled");
         break;
       case "notPurchased":
       default:
@@ -86,7 +115,9 @@ export const Activity = () => {
             type="primary"
             size="large"
           >
-            {acitivityState === "isInstalled"
+            {acitivityState === "isPlaying"
+              ? "Cancel"
+              : acitivityState === "isInstalled"
               ? "Play"
               : acitivityState === "isPurchased"
               ? " Install"
@@ -105,14 +136,6 @@ export const Activity = () => {
       <Title style={{ marginTop: "6rem" }} level={2}>
         State: ({acitivityState})
       </Title>
-
-      <Progress
-        strokeWidth={30}
-        showInfo
-        size={"small"}
-        strokeColor={twoColors}
-        percent={progress}
-      />
     </Row>
   );
 };

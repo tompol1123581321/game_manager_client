@@ -1,7 +1,9 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 use std::fs;
-use std::{io::Read, iter::zip, path::{Path, PathBuf}, process::Command};
+use std::{fmt::format, io::Read, path::{Path, PathBuf}, process::Command};
+use actix_web::{ web, App, HttpServer, Responder};
+use std::env;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -103,11 +105,44 @@ fn run_script(zip_path: String, target_dir: String, args: Vec<String>) -> Result
     }
 }
 
+struct AppState {
+    response_string: String,
+}
+
+async fn client_validation_check(data: web::Data<AppState> ,_info: web::Path<(String, String)>) -> impl Responder {
+    let response = format!("{}", &data.response_string);
+    actix_web::HttpResponse::Ok().body(response)
+}
+
+#[tauri::command]
+fn start_server(secret: String,user_id:String,game_id:String) {
+    let app_state = web::Data::new(AppState {
+        response_string: String::from(&secret),
+    });
+    // Start the server logic
+   std::thread::spawn(move || {
+        actix_rt::System::new().block_on(async {
+            HttpServer::new(move || {
+                App::new()
+                    .app_data(app_state.clone())
+                    .service(
+                        web::resource(format!("/clientValidationCheck/{}/{}", &user_id, &game_id)).to(client_validation_check),
+                    )
+            })
+            .bind("127.0.0.1:8080")
+            .expect("Failed to bind server")
+            .run()
+            .await
+            .expect("Failed to run server");
+        });
+    });
+}
+
 
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet,login,check_folder_exists,save_blob,run_script])
+        .invoke_handler(tauri::generate_handler![greet,login,check_folder_exists,save_blob,run_script,start_server])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

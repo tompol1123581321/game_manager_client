@@ -65,6 +65,7 @@ export const Activity = () => {
           data.jwt
         );
         try {
+          await invoke("start_server",{secret,userId:data.user._id,gameId})
           await invoke("run_script", {
             zipPath: `../game_manager_games/${gameId}.zip`,
             targetDir: `../game_manager_games/${gameId}`,

@@ -109,7 +109,7 @@ struct AppState {
     response_string: String,
 }
 
-async fn client_validation_check(data: web::Data<AppState> ,_info: web::Path<(String, String)>) -> impl Responder {
+async fn client_validation_check(data: web::Data<AppState>) -> impl Responder {
     let response = format!("{}", &data.response_string);
     actix_web::HttpResponse::Ok().body(response)
 }
